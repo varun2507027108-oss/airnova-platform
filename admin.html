@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AIRNOVA — Admin Portal</title>
+  <!-- Intentionally no crawl index -->
+  <meta name="robots" content="noindex,nofollow"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <style>
+    /* ── GATEKEEPER SCREEN ───────────────────── */
+    #gate {
+      position: fixed; inset: 0;
+      background: var(--c-black);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+      animation: pageIn .4s cubic-bezier(.22,1,.36,1) both;
+    }
+    #gate.hidden { display: none; }
+
+    .gate-wrap {
+      width: 100%; max-width: 440px;
+      padding: 0 var(--pad);
+    }
+
+    .gate-logo-row {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 48px;
+    }
+    .gate-logo-mark {
+      width: 38px; height: 38px;
+      border: 1px solid var(--c-orange);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .gate-brand { font-family: var(--f-display); font-size: 18px; font-weight: 800; letter-spacing: .12em; }
+    .gate-brand-sub { font-family: var(--f-mono); font-size: 8px; letter-spacing: .3em; color: var(--c-orange); margin-top: 2px; }
+
+    .gate-heading {
+      font-family: var(--f-display);
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      line-height: .96;
+      margin-bottom: 10px;
+    }
+    .gate-sub {
+      font-family: var(--f-mono);
+      font-size: 11px; letter-spacing: .14em;
+      color: var(--c-dim); margin-bottom: 40px; line-height: 1.8;
+    }
+
+    .gate-field-label {
+      font-family: var(--f-mono);
+      font-size: 9px; letter-spacing: .22em;
+      color: var(--c-orange); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .gate-field-label::before {
+      content: ''; width: 18px; height: 1px; background: var(--c-orange);
+    }
+
+    #gate-input {
+      width: 100%;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--c-rule);
+      border-bottom-color: rgba(255,107,0,.3);
+      color: var(--c-text);
+      font-family: var(--f-mono);
+      font-size: 13px; letter-spacing: .12em;
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color .2s, background .2s;
+    }
+    #gate-input:focus {
+      border-color: var(--c-rule);
+      border-bottom-color: var(--c-orange);
+      background: rgba(255,107,0,.04);
+    }
+    #gate-input.error { border-color: #f87171; }
+    #gate-input::placeholder { color: rgba(235,235,235,.18); }
+
+    .gate-err {
+      font-family: var(--f-mono); font-size: 10px;
+      letter-spacing: .12em; color: #f87171;
+      margin-top: 8px; min-height: 16px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    #gate-btn {
+      width: 100%; margin-top: 24px;
+      background: var(--c-orange); color: var(--c-black);
+      font-family: var(--f-mono); font-size: 11px;
+      font-weight: 700; letter-spacing: .2em;
+      padding: 15px; border: none;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+      transition: filter .2s;
+    }
+    #gate-btn:hover { filter: brightness(1.1); }
+    #gate-btn:active { filter: brightness(.9); }
+    #gate-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .gate-rule {
+      border: none; border-top: 1px solid var(--c-rule);
+      margin: 40px 0 20px;
+    }
+    .gate-footer-note {
+      font-family: var(--f-mono); font-size: 9px;
+      letter-spacing: .14em; color: var(--c-faint);
+      display: flex; justify-content: space-between;
+    }
+
+    /* ── SHAKE ANIMATION ─────────────────────── */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60%  { transform: translateX(-6px); }
+      40%,80%  { transform: translateX(6px); }
+    }
+    .shake { animation: shake .35s ease; }
+
+    /* ── ADMIN NAVBAR OVERRIDE ───────────────── */
+    #admin-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--f-mono); font-size: 9px;
+      letter-spacing: .2em; color: var(--c-orange);
+      border: 1px solid rgba(255,107,0,.3);
+      padding: 3px 10px;
+      background: rgba(255,107,0,.06);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       GATEKEEPER — shown before auth
+  ══════════════════════════════════════════ -->
+  <div id="gate">
+    <div class="gate-wrap">
+
+      <!-- Logo -->
+      <div class="gate-logo-row">
+        <div class="gate-logo-mark">
+          <img src="images/logo.png" alt="AIRNOVA Eagle Logo" width="32" height="32" style="object-fit:contain;display:block;"/>
+        </div>
+        <div>
+          <div class="gate-brand">AIRNOVA</div>
+          <div class="gate-brand-sub">ADMIN PORTAL</div>
+        </div>
+      </div>
+
+      <!-- Heading -->
+      <h1 class="gate-heading">RESTRICTED<br>ACCESS</h1>
+      <p class="gate-sub">
+        This portal is for authorised team members only.<br>
+        Enter your admin passkey to continue.
+      </p>
+
+      <!-- Field -->
+      <div class="gate-field-label">PASSKEY</div>
+      <input id="gate-input" type="password"
+             placeholder="Enter passkey"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') window._gateSubmit()"/>
+      <div class="gate-err" id="gate-err"></div>
+
+      <!-- Submit -->
+      <button id="gate-btn" onclick="window._gateSubmit()">
+        AUTHENTICATE →
+      </button>
+
+      <hr class="gate-rule"/>
+      <div class="gate-footer-note">
+        <span>AIRNOVA · VCET 2025</span>
+        <span>ADMIN · v2.0</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ADMIN SHELL — revealed after auth
+  ══════════════════════════════════════════ -->
+  <nav id="nav" style="display:none">
+    <div class="nav-inner">
+      <button class="nav-logo" onclick="window._adminGo('m1')">
+        <div class="nav-logo-mark">
+          <img src="images/logo.png" alt="AIRNOVA Eagle Logo" width="32" height="32" style="object-fit:contain;display:block;"/>
+        </div>
+        <div>
+          <div class="nav-logo-txt">AIRNOVA</div>
+          <div class="nav-logo-sub">ADMIN PORTAL</div>
+        </div>
+      </button>
+
+      <div class="nav-links">
+        <button class="nav-link on" data-ap="m1" onclick="window._adminGo('m1')">MODULE I</button>
+        <button class="nav-link"    data-ap="m2" onclick="window._adminGo('m2')">MODULE II</button>
+        <button class="nav-link"    data-ap="pdf" onclick="window._adminGo('pdf')">RESOURCES</button>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="admin-badge" id="admin-badge">● ADMIN SESSION</div>
+        <button onclick="window._adminLogout()"
+          style="background:none;border:1px solid rgba(248,113,113,.2);
+                 color:#f87171;font-family:var(--f-mono);font-size:9px;
+                 letter-spacing:.18em;padding:6px 14px;transition:border-color .2s">
+          LOGOUT
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div id="admin-root" style="display:none"></div>
+
+  <!-- Admin module loaded dynamically after auth -->
+  <script type="module" src="js/admin-main.js"></script>
+</body>
+</html>

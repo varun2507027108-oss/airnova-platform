@@ -1,0 +1,12 @@
+# Video files — too large for git
+*.mp4
+*.mov
+*.webm
+*.avi
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node (if added later)
+node_modules/

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>AIRNOVA — Aerospace Academy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+
+  <!-- ── NAVBAR ─────────────────────────────────── -->
+  <nav id="nav">
+    <div class="nav-inner">
+      <button class="nav-logo" onclick="go('home')">
+        <div class="nav-logo-mark">
+          <img src="images/logo.png" alt="AIRNOVA Eagle Logo" width="32" height="32" style="object-fit:contain;display:block;"/>
+        </div>
+        <div>
+          <div class="nav-logo-txt">AIRNOVA</div>
+          <div class="nav-logo-sub">AEROSPACE ACADEMY</div>
+        </div>
+      </button>
+
+      <div class="nav-links" id="navLinks">
+        <button class="nav-link on" data-p="home" onclick="go('home')">HOME</button>
+        <button class="nav-link"   data-p="v1"   onclick="go('v1')">MODULE I</button>
+        <button class="nav-link"   data-p="v2"   onclick="go('v2')">MODULE II</button>
+        <button class="nav-link"   data-p="pdf"  onclick="go('pdf')">RESOURCES</button>
+      </div>
+
+      <div class="nav-status">
+        <div class="dot"></div>
+        <span>LIVE 2025</span>
+      </div>
+
+      <button class="ham" onclick="toggleMob()" id="hamBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <line x1="3" y1="6"  x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="mob" id="mobDrawer">
+        <button class="mob-link on" data-p="home" onclick="go('home')">HOME</button>
+        <button class="mob-link"   data-p="v1"   onclick="go('v1')">MODULE I</button>
+        <button class="mob-link"   data-p="v2"   onclick="go('v2')">MODULE II</button>
+        <button class="mob-link"   data-p="pdf"  onclick="go('pdf')">RESOURCES</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── PAGE ROOT ──────────────────────────────── -->
+  <div id="root"></div>
+
+  <!-- ── SCRIPTS (ES modules) ───────────────────── -->
+  <!-- PUBLIC BUILD — no upload modules loaded -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
