@@ -268,13 +268,13 @@ function initPdfHandlers() {
 
       const { error: dbError } = await supabase
         .from('module_content')
-        .upsert({
-          module_key: 'pdf',
+        .update({
           file_url: publicUrl,
           file_name: file.name,
           file_type: 'pdf',
           updated_at: new Date().toISOString()
-        }, { onConflict: 'module_key' });
+        })
+        .eq('module_key', 'pdf');
 
       if (dbError) throw dbError;
 

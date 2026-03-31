@@ -53,17 +53,17 @@ export async function handleFile(file, pid) {
       .from('videos')
       .getPublicUrl(filePath);
 
-    // Upsert into module_content table
+    // Update module_content table
     const moduleKey = pid === 'p1' ? 'v1' : 'v2';
     const { error: dbError } = await supabase
       .from('module_content')
-      .upsert({
-        module_key: moduleKey,
+      .update({
         file_url: publicUrl,
         file_name: file.name,
         file_type: 'video',
         updated_at: new Date().toISOString()
-      }, { onConflict: 'module_key' });
+      })
+      .eq('module_key', moduleKey);
 
     if (dbError) throw dbError;
 
@@ -108,12 +108,13 @@ export function handleDrop(e, pid) {
 export async function resetDefault(pid) {
   try {
     const moduleKey = pid === 'p1' ? 'v1' : 'v2';
-    await supabase.from('module_content').upsert({
-      module_key: moduleKey,
-      file_url: '',
-      file_name: '',
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'module_key' });
+    await supabase.from('module_content')
+      .update({
+        file_url: '',
+        file_name: '',
+        updated_at: new Date().toISOString()
+      })
+      .eq('module_key', moduleKey);
 
     const v = document.getElementById('vid_' + pid);
     if (v) { v.pause(); v.src = DFLT; v.load(); }
