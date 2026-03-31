@@ -1,31 +1,20 @@
 // js/pages/admin-page.js
-// Admin dashboard controller — ALL upload logic lives here.
+// Admin dashboard controller — module data management.
 // This file is NEVER imported by the public build (main.js).
-// It is only dynamically imported by admin-main.js after authentication.
 
-import { ic }         from '../icons.js';
-import { playerHTML } from '../components/player-html.js';
-import { uploadHTML } from '../components/upload-html.js';
-import { footerHTML } from '../components/footer.js';
-import { LOGO }       from '../logo.js';
-import { initPlayer } from '../player.js';
-import { handleFile, handleDrop, setUpUI, resetDefault } from '../upload.js';
-import { supabase }   from '../supabase.js';
-
-/* ── Expose upload handlers on window so inline HTML onclick/onchange can call them ── */
-window.handleFile   = handleFile;
-window.handleDrop   = handleDrop;
-window.setUpUI      = setUpUI;
-window.resetDefault = resetDefault;
-
-const DFLT = '';
+import { ic }              from '../icons.js';
+import { playerHTML }      from '../components/player-html.js';
+import { footerHTML }      from '../components/footer.js';
+import { LOGO }            from '../logo.js';
+import { initAdminInputs } from '../admin-upload.js';
+import { initYTPlayer }    from '../yt-player.js';
 
 const MODULE_DATA = {
   m1: {
     num:   1,
     ep:    'EPISODE 01',
     title: 'PRINCIPLES OF FLIGHT',
-    desc:  'Introduction to the four fundamental forces — lift, drag, thrust, and weight. Upload the lecture video for this module below.',
+    desc:  'Set the YouTube video ID and Google Drive download URL for this module.',
     chapters: [
       [0,   'Introduction'],
       [225, 'Four Forces'],
@@ -38,7 +27,7 @@ const MODULE_DATA = {
     num:   2,
     ep:    'EPISODE 02',
     title: 'AIRCRAFT SYSTEMS & AVIONICS',
-    desc:  'Deep dive into hydraulics, fly-by-wire technology, and modern glass cockpit avionics. Upload the lecture video for this module below.',
+    desc:  'Set the YouTube video ID and Google Drive download URL for this module.',
     chapters: [
       [0,    'Intro'],
       [250,  'Hydraulics'],
@@ -51,8 +40,6 @@ const MODULE_DATA = {
 
 /* ── PDF Resource page (admin view) ─────── */
 const PDF_SRC = '';
-
-
 
 /* ── Admin status bar ───────────────────── */
 const adminStatusBar = (activePanel) => `
@@ -70,8 +57,62 @@ const adminStatusBar = (activePanel) => `
     PANEL · ${activePanel.toUpperCase()}
   </div>
   <div style="margin-left:auto;font-family:var(--f-mono);font-size:9px;letter-spacing:.14em;color:var(--c-faint)">
-    CHANGES ARE SESSION-LOCAL · CLOUD SYNC READY
+    SUPABASE · CLOUD SYNC ACTIVE
   </div>
+</div>`;
+
+/* ── Admin input panel for module data ──── */
+const adminInputPanel = (pid) => `
+<div style="margin-top:var(--sp-xl)">
+  <div class="label" style="margin-bottom:6px">MODULE DATA</div>
+  <p style="font-family:var(--f-mono);font-size:11px;color:var(--c-faint);
+            letter-spacing:.08em;margin-bottom:20px;line-height:1.7">
+    Set the YouTube video ID and Google Drive download URL for this module.
+    Changes are saved to Supabase and reflected on the public site immediately.
+  </p>
+
+  <!-- YouTube Video ID -->
+  <div style="margin-bottom:16px">
+    <div style="font-family:var(--f-mono);font-size:9px;letter-spacing:.22em;
+                color:var(--c-orange);margin-bottom:8px;display:flex;align-items:center;gap:8px">
+      <span style="width:18px;height:1px;background:var(--c-orange);display:inline-block"></span>
+      YOUTUBE VIDEO ID
+    </div>
+    <input type="text" id="yt_input_${pid}"
+           placeholder="dQw4w9WgXcQ"
+           style="width:100%;background:rgba(255,255,255,.03);border:1px solid var(--c-rule);
+                  color:var(--c-text);font-family:var(--f-mono);font-size:13px;
+                  letter-spacing:.08em;padding:14px 16px;outline:none;
+                  transition:border-color .2s,background .2s"
+           onfocus="this.style.borderBottomColor='var(--c-orange)';this.style.background='rgba(255,107,0,.04)'"
+           onblur="this.style.borderBottomColor='';this.style.background='rgba(255,255,255,.03)'" />
+  </div>
+
+  <!-- Google Drive Download URL -->
+  <div style="margin-bottom:20px">
+    <div style="font-family:var(--f-mono);font-size:9px;letter-spacing:.22em;
+                color:var(--c-orange);margin-bottom:8px;display:flex;align-items:center;gap:8px">
+      <span style="width:18px;height:1px;background:var(--c-orange);display:inline-block"></span>
+      DRIVE DOWNLOAD URL
+    </div>
+    <input type="text" id="drive_input_${pid}"
+           placeholder="https://drive.google.com/uc?export=download&amp;id=FILE_ID"
+           style="width:100%;background:rgba(255,255,255,.03);border:1px solid var(--c-rule);
+                  color:var(--c-text);font-family:var(--f-mono);font-size:13px;
+                  letter-spacing:.08em;padding:14px 16px;outline:none;
+                  transition:border-color .2s,background .2s"
+           onfocus="this.style.borderBottomColor='var(--c-orange)';this.style.background='rgba(255,107,0,.04)'"
+           onblur="this.style.borderBottomColor='';this.style.background='rgba(255,255,255,.03)'" />
+  </div>
+
+  <!-- Save button -->
+  <button class="o-btn" onclick="window.saveModuleData('${pid}')">
+    SAVE CHANGES →
+  </button>
+
+  <!-- Status row -->
+  <div id="save_status_${pid}" style="margin-top:12px;min-height:24px;
+       font-family:var(--f-mono);font-size:10px;letter-spacing:.14em"></div>
 </div>`;
 
 /* ── Video module admin panel ───────────── */
@@ -106,63 +147,8 @@ const videoAdminPanel = (key) => {
         <div class="kbhint"><kbd>M</kbd><span>Mute / Unmute</span></div>
       </div>
 
-      <!-- ── ADMIN: Upload zone ───────── -->
-      <div style="margin-top:var(--sp-xl)">
-        <div class="label" style="margin-bottom:6px">UPLOAD / CHANGE VIDEO</div>
-        <p style="font-family:var(--f-mono);font-size:11px;color:var(--c-faint);
-                  letter-spacing:.08em;margin-bottom:14px;line-height:1.7">
-          Replace the module video. Accepted formats: MP4, MOV, WEBM, AVI.
-          Video is stored as a local object URL — wire to Cloudinary or Firebase Storage for persistence.
-        </p>
-        ${uploadHTML(pid)}
-      </div>
-
-      <!-- ── ADMIN: Action row ─────────── -->
-      <div style="margin-top:var(--sp-l);display:flex;flex-wrap:wrap;gap:12px;align-items:center">
-        <a href="#" id="dl_btn_${pid}" download="airnova-module-${d.num}.mp4"
-           class="o-btn" style="text-decoration:none">
-          ${ic.dl} DOWNLOAD VIDEO
-        </a>
-        <button id="rb_${pid}" onclick="window.resetDefault('${pid}')"
-          style="display:none;align-items:center;gap:7px;
-                 background:transparent;
-                 border:1px solid var(--c-rule);
-                 color:var(--c-dim);
-                 padding:12px 20px;
-                 font-family:var(--f-mono);font-size:10px;letter-spacing:.16em;
-                 transition:border-color .2s,color .2s">
-          ${ic.rst} RESTORE DEFAULT
-        </button>
-      </div>
-
-      <!-- ── ADMIN: Cloud sync notice ──── -->
-      <div style="
-        margin-top:var(--sp-l);
-        border:1px solid rgba(255,107,0,.15);
-        background:rgba(255,107,0,.04);
-        padding:16px 20px;
-        display:flex; align-items:flex-start; gap:14px;
-      ">
-        <div style="color:var(--c-orange);margin-top:1px;flex-shrink:0">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r=".5" fill="currentColor"/>
-          </svg>
-        </div>
-        <div>
-          <div style="font-family:var(--f-mono);font-size:10px;font-weight:700;
-                      letter-spacing:.16em;color:var(--c-orange);margin-bottom:5px">
-            CLOUD SYNC — INTEGRATION POINT
-          </div>
-          <p style="font-family:var(--f-mono);font-size:11px;color:var(--c-faint);
-                    line-height:1.75;letter-spacing:.04em">
-            Current uploads create a local <code style="color:var(--c-dim)">ObjectURL</code>.
-            For persistent hosting, replace <code style="color:var(--c-dim)">URL.createObjectURL(file)</code>
-            in <code style="color:var(--c-dim)">js/upload.js → handleFile()</code>
-            with a Cloudinary upload or a Firebase Storage <code style="color:var(--c-dim)">put()</code> call
-            and return the resulting CDN URL instead.
-          </p>
-        </div>
-      </div>
+      <!-- ── ADMIN: Module data input panel ───────── -->
+      ${adminInputPanel(pid)}
 
     </div>
   </div>
@@ -205,36 +191,9 @@ const pdfAdminPanel = () => {
             ${ic.dl} DOWNLOAD REPORT
           </a>
         </div>
-        <iframe src="${PDF_SRC}#toolbar=0&navpanes=0" title="PDF Viewer"
+        <iframe src="${PDF_SRC ? PDF_SRC + '#toolbar=0&navpanes=0' : 'about:blank'}" title="PDF Viewer"
                 style="width:100%;height:620px;border:none;display:block;background:#111">
         </iframe>
-      </div>
-
-      <!-- ── ADMIN: PDF upload zone ──── -->
-      <div style="margin-top:var(--sp-xl)">
-        <div class="label" style="margin-bottom:6px">REPLACE FEATURED PDF</div>
-        <p style="font-family:var(--f-mono);font-size:11px;color:var(--c-faint);
-                  letter-spacing:.08em;margin-bottom:14px;line-height:1.7">
-          Upload a new PDF to replace the featured document in the viewer above.
-          Changes are session-local; wire to a cloud bucket for persistence.
-        </p>
-        <!-- PDF file picker — uses upload zone styles -->
-        <div class="upload-zone" id="uz_pdf"
-          onclick="document.getElementById('uf_pdf').click()"
-          ondragover="event.preventDefault();this.classList.add('drag')"
-          ondragleave="this.classList.remove('drag')"
-          ondrop="window._handlePdfDrop(event)">
-          <input type="file" accept="application/pdf" id="uf_pdf" style="display:none"
-                 onchange="window._handlePdfFile(this.files[0])"/>
-          <div class="up-icon" id="uicon_pdf">
-            ${ic.pdf}
-          </div>
-          <div style="flex:1;min-width:160px">
-            <div class="up-name" id="uname_pdf">Upload / Replace PDF</div>
-            <div class="up-sub"  id="usub_pdf">Drag &amp; drop or click · PDF only</div>
-          </div>
-          <span class="ftag">PDF</span>
-        </div>
       </div>
     </div>
   </div>
@@ -242,70 +201,6 @@ const pdfAdminPanel = () => {
   ${footerHTML()}
 </div>`;
 };
-
-/* ── PDF file handler (admin-local) ─────── */
-function initPdfHandlers() {
-  window._handlePdfFile = async (file) => {
-    if (!file || file.type !== 'application/pdf') {
-      document.getElementById('uname_pdf').textContent = 'Invalid — PDF files only';
-      return;
-    }
-    
-    document.getElementById('uname_pdf').textContent = 'Processing...';
-
-    try {
-      const filePath = `pdf/${file.name}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('pdfs')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('pdfs')
-        .getPublicUrl(filePath);
-
-      const { error: dbError } = await supabase
-        .from('module_content')
-        .update({
-          file_url: publicUrl,
-          file_name: file.name,
-          file_type: 'pdf',
-          updated_at: new Date().toISOString()
-        })
-        .eq('module_key', 'pdf');
-
-      if (dbError) throw dbError;
-
-      const iframe = document.querySelector('.pdf-shell iframe');
-      if (iframe) iframe.src = publicUrl + '#toolbar=0&navpanes=0';
-      
-      const dl = document.getElementById('dl_pdf_btn');
-      if (dl) {
-        dl.href = publicUrl;
-        dl.download = file.name;
-      }
-      
-      document.getElementById('uname_pdf').textContent = 'Loaded: ' + file.name;
-      document.getElementById('usub_pdf').textContent  = 'PDF active in viewer above';
-      document.getElementById('uicon_pdf').innerHTML   =
-        `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>`;
-
-    } catch (err) {
-      console.error('PDF upload failed:', err);
-      document.getElementById('uname_pdf').textContent = 'Upload Failed';
-      document.getElementById('usub_pdf').textContent = err.message || 'Check connection';
-      document.getElementById('uicon_pdf').innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-    }
-  };
-
-  window._handlePdfDrop = (e) => {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drag');
-    window._handlePdfFile(e.dataTransfer.files[0]);
-  };
-}
 
 /* ── Main export ────────────────────────── */
 /**
@@ -315,21 +210,26 @@ function initPdfHandlers() {
 export const adminPage = (panel) => {
   let html;
   let pid;
+  let chapters;
   switch (panel) {
-    case 'm1':  html = videoAdminPanel('m1'); pid = 'p1'; break;
-    case 'm2':  html = videoAdminPanel('m2'); pid = 'p2'; break;
+    case 'm1':  html = videoAdminPanel('m1'); pid = 'p1'; chapters = MODULE_DATA.m1.chapters; break;
+    case 'm2':  html = videoAdminPanel('m2'); pid = 'p2'; chapters = MODULE_DATA.m2.chapters; break;
     case 'pdf': html = pdfAdminPanel();                    break;
-    default:    html = videoAdminPanel('m1'); pid = 'p1';
+    default:    html = videoAdminPanel('m1'); pid = 'p1'; chapters = MODULE_DATA.m1.chapters;
   }
 
-  // Init player controls after the DOM has been updated
+  /* Init admin inputs + YouTube preview after DOM update */
   if (pid) {
-    setTimeout(() => initPlayer(pid), 60);
-  }
-
-  // Init PDF-specific handlers after render
-  if (panel === 'pdf') {
-    setTimeout(initPdfHandlers, 60);
+    setTimeout(async () => {
+      try {
+        const data = await initAdminInputs(pid);
+        if (data && data.yt_video_id) {
+          await initYTPlayer(pid, data.yt_video_id, chapters);
+        }
+      } catch (err) {
+        console.error('[Admin] Panel init failed:', err);
+      }
+    }, 60);
   }
 
   return html;

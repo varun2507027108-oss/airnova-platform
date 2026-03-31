@@ -4,7 +4,7 @@
 
 import { ic }         from '../icons.js';
 import { footerHTML } from '../components/footer.js';
-import { supabase }   from '../supabase.js';
+import { supabase }   from '../supabase-client.js';
 
 const PDF_SRC = '';
 
@@ -71,7 +71,7 @@ export const pdfPage = () => {
             ${ic.dl} DOWNLOAD REPORT
           </a>
         </div>
-        <iframe src="${PDF_SRC}#toolbar=0&navpanes=0"
+        <iframe src="${PDF_SRC ? PDF_SRC + '#toolbar=0&navpanes=0' : 'about:blank'}"
                 id="pdf_iframe"
                 title="PDF Viewer"
                 style="width:100%;height:620px;border:none;

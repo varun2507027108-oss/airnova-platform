@@ -1,10 +1,9 @@
 // js/components/player-html.js
 // Returns the HTML markup for a video player instance.
-// initPlayer(pid) in player.js must be called after this is injected.
+// The YouTube container replaces the native <video> element.
+// All control IDs follow the same pattern for compatibility.
 
 import { ic } from '../icons.js';
-
-const DFLT = '';
 
 /**
  * @param {string}   pid      - Unique player id, e.g. 'p1'
@@ -27,8 +26,10 @@ export const playerHTML = (pid, chapters = []) => `
   <!-- Scanline texture -->
   <div class="p-scan"></div>
 
-  <!-- Video element -->
-  <video id="vid_${pid}" src="${DFLT}"></video>
+  <!-- YouTube container (replaces native <video>) -->
+  <div style="position:relative;width:100%;padding-top:56.25%;background:#000">
+    <div id="ytc_${pid}" style="position:absolute;top:0;left:0;width:100%;height:100%"></div>
+  </div>
 
   <!-- Controls -->
   <div class="p-ctrl" id="pctrl_${pid}">
@@ -40,7 +41,7 @@ export const playerHTML = (pid, chapters = []) => `
       </div>
       <input class="seek" type="range" min="0" max="100" step=".05"
              value="0" id="seek_${pid}" style="--p:0%">
-      <!-- Chapter dot markers — populated by initPlayer -->
+      <!-- Chapter dot markers — populated by yt-player.js -->
       <div id="marks_${pid}"
            data-chs='${JSON.stringify(chapters)}'
            style="position:absolute;inset:0;pointer-events:none">

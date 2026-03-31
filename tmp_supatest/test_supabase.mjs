@@ -6,39 +6,64 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function test() {
-  console.log("Testing Storage Upload (upsert)...");
-  
-  // Create a Blob to simulate a File upload correctly for Supabase Storage
-  const fileContent = "dummy video content";
-  const blob = new Blob([fileContent], { type: 'video/mp4' });
+  // TEST 1: Storage upload
+  console.log("=== TEST 1: Storage Upload ===");
+  const blob = new Blob(["test content"], { type: 'video/mp4' });
+  const { data: upData, error: upError } = await supabase.storage
+    .from('videos')
+    .upload('p1/test.mp4', blob, { upsert: true, contentType: 'video/mp4' });
 
-  const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('videos')
-      .upload('p1/test.mp4', blob, { upsert: true, contentType: 'video/mp4' });
-  
-  if (uploadError) {
-      console.log("❌ Storage Upload Failed:", uploadError.message, uploadError);
+  if (upError) {
+    console.log("❌ STORAGE FAILED:", JSON.stringify(upError, null, 2));
   } else {
-      console.log("✅ Storage Upload Succeeded:", uploadData);
-      const { data: { publicUrl } } = supabase.storage.from('videos').getPublicUrl('p1/test.mp4');
-      console.log("Public URL:", publicUrl);
+    console.log("✅ STORAGE OK:", JSON.stringify(upData, null, 2));
   }
 
-  console.log("\nTesting Database Upsert (onConflict)...");
-  const { error: dbError } = await supabase
-      .from('module_content')
-      .upsert({
-        module_key: 'v1',
-        file_url: 'http://example.com/test.mp4',
-        file_name: 'test.mp4',
-        file_type: 'video',
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'module_key' });
+  // TEST 2: Get public URL
+  console.log("\n=== TEST 2: Public URL ===");
+  const { data: urlData } = supabase.storage.from('videos').getPublicUrl('p1/test.mp4');
+  console.log("Public URL:", urlData.publicUrl);
+
+  // TEST 3: Database UPDATE (not upsert)
+  console.log("\n=== TEST 3: Database UPDATE ===");
+  const { data: dbData, error: dbError, count } = await supabase
+    .from('module_content')
+    .update({
+      file_url: urlData.publicUrl,
+      file_name: 'test.mp4',
+      file_type: 'video',
+      updated_at: new Date().toISOString()
+    })
+    .eq('module_key', 'v1')
+    .select();
 
   if (dbError) {
-      console.log("❌ Database Upsert Failed:", dbError.message, dbError);
+    console.log("❌ DB UPDATE FAILED:", JSON.stringify(dbError, null, 2));
   } else {
-      console.log("✅ Database Upsert Succeeded.");
+    console.log("✅ DB UPDATE OK:", JSON.stringify(dbData, null, 2));
+  }
+
+  // TEST 4: Read back the row
+  console.log("\n=== TEST 4: Read back row ===");
+  const { data: readData, error: readError } = await supabase
+    .from('module_content')
+    .select('*')
+    .eq('module_key', 'v1')
+    .single();
+
+  if (readError) {
+    console.log("❌ READ FAILED:", JSON.stringify(readError, null, 2));
+  } else {
+    console.log("✅ ROW DATA:", JSON.stringify(readData, null, 2));
+  }
+
+  // TEST 5: List storage buckets
+  console.log("\n=== TEST 5: List buckets ===");
+  const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+  if (bucketsError) {
+    console.log("❌ LIST BUCKETS FAILED:", JSON.stringify(bucketsError, null, 2));
+  } else {
+    console.log("✅ BUCKETS:", buckets.map(b => `${b.name} (public: ${b.public})`).join(', '));
   }
 }
 
