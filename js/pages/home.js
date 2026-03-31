@@ -12,7 +12,7 @@ export const homePage = () => `
     <div class="hero-dots"></div>
     <div class="hero-stripe"></div>
 
-    <div class="hero-inner" style="max-width:var(--max);margin:0 auto;width:100%">
+    <div class="hero-inner">
 
       <!-- Left column -->
       <div class="hero-l">
@@ -42,9 +42,9 @@ export const homePage = () => `
       <div class="hero-r">
         <div style="position:relative;z-index:1">
           <div class="label" style="margin-bottom:24px">DREAMS TAKE FLIGHT</div>
-          <p style="font-family:var(--f-display);font-size:clamp(1.8rem,3.5vw,3rem);
+          <p style="font-family:var(--f-display);font-size:clamp(1rem,2.2vw,2rem);
                     font-weight:800;letter-spacing:-.02em;line-height:1;
-                    color:rgba(235,235,235,0.1)">
+                    color:rgba(235,235,235,0.1);word-break:break-word;overflow:hidden">
             THE SKY IS NOT<br>THE LIMIT
           </p>
         </div>

@@ -4,7 +4,7 @@
 
 import { ic } from '../icons.js';
 
-const DFLT = 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4';
+const DFLT = '';
 
 /**
  * @param {string}   pid      - Unique player id, e.g. 'p1'

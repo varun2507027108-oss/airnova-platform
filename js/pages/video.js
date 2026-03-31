@@ -7,7 +7,7 @@ import { ic }         from '../icons.js';
 import { playerHTML } from '../components/player-html.js';
 import { footerHTML } from '../components/footer.js';
 
-const DFLT = 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4';
+const DFLT = '';
 
 const MODULE_DATA = {
   1: {

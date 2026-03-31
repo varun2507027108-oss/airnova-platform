@@ -4,7 +4,7 @@
 
 import { ic } from './icons.js';
 
-const DFLT = 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4';
+const DFLT = '';
 
 /** Update the upload zone UI based on current state. */
 export function setUpUI(pid, state, name = '', sub = '') {
@@ -42,6 +42,12 @@ export function handleFile(file, pid) {
     const v = document.getElementById('vid_' + pid);
     if (v) { v.pause(); v.src = url; v.load(); }
 
+    const dl = document.getElementById('dl_btn_' + pid);
+    if (dl) {
+      dl.href = url;
+      dl.download = file.name;
+    }
+
     setUpUI(pid, 'ok', 'Loaded: ' + file.name, 'Custom video active');
 
     const badge = document.getElementById('cbadge_' + pid);
@@ -65,6 +71,12 @@ export function handleDrop(e, pid) {
 export function resetDefault(pid) {
   const v = document.getElementById('vid_' + pid);
   if (v) { v.pause(); v.src = DFLT; v.load(); }
+
+  const dl = document.getElementById('dl_btn_' + pid);
+  if (dl) {
+    dl.href = '#';
+    dl.download = '';
+  }
 
   const badge = document.getElementById('cbadge_' + pid);
   if (badge) badge.style.display = 'none';

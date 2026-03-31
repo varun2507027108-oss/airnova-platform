@@ -17,7 +17,7 @@ window.handleDrop   = handleDrop;
 window.setUpUI      = setUpUI;
 window.resetDefault = resetDefault;
 
-const DFLT = 'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4';
+const DFLT = '';
 
 const MODULE_DATA = {
   m1: {
@@ -118,9 +118,9 @@ const videoAdminPanel = (key) => {
 
       <!-- ── ADMIN: Action row ─────────── -->
       <div style="margin-top:var(--sp-l);display:flex;flex-wrap:wrap;gap:12px;align-items:center">
-        <a href="${DFLT}" download="airnova-module-${d.num}.mp4"
+        <a href="#" id="dl_btn_${pid}" download="airnova-module-${d.num}.mp4"
            class="o-btn" style="text-decoration:none">
-          ${ic.dl} DOWNLOAD DEFAULT VIDEO
+          ${ic.dl} DOWNLOAD VIDEO
         </a>
         <button id="rb_${pid}" onclick="window.resetDefault('${pid}')"
           style="display:none;align-items:center;gap:7px;
