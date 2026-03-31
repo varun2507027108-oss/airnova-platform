@@ -49,7 +49,7 @@ const MODULE_DATA = {
 };
 
 /* ── PDF Resource page (admin view) ─────── */
-const PDF_SRC = 'https://www.w3.org/WAI/WCAG21/Techniques/pdf/PDF1.pdf';
+const PDF_SRC = '';
 
 
 
@@ -199,7 +199,7 @@ const pdfAdminPanel = () => {
               <div class="pdf-fmeta">20 PAGES · 2.4 MB · FLAGSHIP DOCUMENT</div>
             </div>
           </div>
-          <a href="${PDF_SRC}" download="airnova-report.pdf" target="_blank"
+          <a href="#" download="airnova-report.pdf" target="_blank" id="dl_pdf_btn"
              class="o-btn" style="text-decoration:none">
             ${ic.dl} DOWNLOAD REPORT
           </a>
@@ -252,6 +252,13 @@ function initPdfHandlers() {
     const url = URL.createObjectURL(file);
     const iframe = document.querySelector('.pdf-shell iframe');
     if (iframe) iframe.src = url + '#toolbar=0&navpanes=0';
+    
+    const dl = document.getElementById('dl_pdf_btn');
+    if (dl) {
+      dl.href = url;
+      dl.download = file.name;
+    }
+    
     document.getElementById('uname_pdf').textContent = 'Loaded: ' + file.name;
     document.getElementById('usub_pdf').textContent  = 'PDF active in viewer above';
     document.getElementById('uicon_pdf').innerHTML   =

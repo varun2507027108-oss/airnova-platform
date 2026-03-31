@@ -5,7 +5,7 @@
 import { ic }         from '../icons.js';
 import { footerHTML } from '../components/footer.js';
 
-const PDF_SRC = 'https://www.w3.org/WAI/WCAG21/Techniques/pdf/PDF1.pdf';
+const PDF_SRC = '';
 
 const DOCUMENTS = [
   {
