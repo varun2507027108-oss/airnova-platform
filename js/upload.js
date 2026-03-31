@@ -41,12 +41,18 @@ export async function handleFile(file, pid) {
   try {
     const filePath = `${pid}/${file.name}`;
     
-    // Upload to Supabase
+    // Upload to Supabase Storage
+    console.log('[Upload] Starting storage upload:', filePath, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('videos')
-      .upload(filePath, file, { upsert: true });
+      .upload(filePath, file, { upsert: true, contentType: file.type });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('[Upload] STORAGE UPLOAD FAILED:', JSON.stringify(uploadError));
+      throw new Error('Storage upload failed: ' + (uploadError.message || uploadError.statusCode));
+    }
+    console.log('[Upload] Storage upload succeeded:', uploadData);
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
@@ -55,7 +61,8 @@ export async function handleFile(file, pid) {
 
     // Update module_content table
     const moduleKey = pid === 'p1' ? 'v1' : 'v2';
-    const { error: dbError } = await supabase
+    console.log('[Upload] Updating DB row for module_key:', moduleKey, 'URL:', publicUrl);
+    const { data: dbData, error: dbError } = await supabase
       .from('module_content')
       .update({
         file_url: publicUrl,
@@ -63,9 +70,14 @@ export async function handleFile(file, pid) {
         file_type: 'video',
         updated_at: new Date().toISOString()
       })
-      .eq('module_key', moduleKey);
+      .eq('module_key', moduleKey)
+      .select();
 
-    if (dbError) throw dbError;
+    if (dbError) {
+      console.error('[Upload] DB UPDATE FAILED:', JSON.stringify(dbError));
+      throw new Error('Database update failed: ' + dbError.message);
+    }
+    console.log('[Upload] DB update succeeded:', dbData);
 
     // Update UI elements
     const v = document.getElementById('vid_' + pid);

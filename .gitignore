@@ -29,3 +29,5 @@ bundle.html
 .env.local
 .env.*
 
+# Test / diagnostic scripts
+tmp_supatest/
