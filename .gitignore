@@ -1,12 +1,31 @@
-# Video files — too large for git
-*.mp4
-*.mov
-*.webm
-*.avi
+# .gitignore
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Node (if added later)
+# Editors
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Logs
+*.log
+
+# Node (if you ever add tooling)
 node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build output (if you add a bundler later)
+dist/
+build/
+bundle.html
+
+# Env / secrets
+.env
+.env.local
+.env.*
+js/config.js

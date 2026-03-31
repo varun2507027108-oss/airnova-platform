@@ -4,6 +4,7 @@
 
 import { ic }         from '../icons.js';
 import { footerHTML } from '../components/footer.js';
+import { supabase }   from '../supabase.js';
 
 const PDF_SRC = '';
 
@@ -61,16 +62,17 @@ export const pdfPage = () => {
           <div class="pdf-meta-row">
             <div class="pdf-icon">${ic.pdf}</div>
             <div>
-              <div class="pdf-fname">AIRNOVA_Technical_Report_2025.pdf</div>
+              <div class="pdf-fname" id="dl_pdf_fname">AIRNOVA_Technical_Report_2025.pdf</div>
               <div class="pdf-fmeta">20 PAGES · 2.4 MB · FLAGSHIP DOCUMENT</div>
             </div>
           </div>
-          <a href="${PDF_SRC}" download="airnova-report.pdf" target="_blank"
+          <a href="${PDF_SRC}" download="airnova-report.pdf" target="_blank" id="dl_pdf_btn"
              class="o-btn" style="text-decoration:none">
             ${ic.dl} DOWNLOAD REPORT
           </a>
         </div>
         <iframe src="${PDF_SRC}#toolbar=0&navpanes=0"
+                id="pdf_iframe"
                 title="PDF Viewer"
                 style="width:100%;height:620px;border:none;
                        display:block;background:#111">
@@ -83,3 +85,33 @@ export const pdfPage = () => {
   ${footerHTML()}
 </div>`;
 };
+
+export async function loadCloudPdf() {
+  try {
+    const { data: row, error } = await supabase
+      .from('module_content')
+      .select('file_url, file_name')
+      .eq('module_key', 'pdf')
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error; 
+
+    if (row && row.file_url) {
+      const iframe = document.getElementById('pdf_iframe');
+      if (iframe) iframe.src = row.file_url + '#toolbar=0&navpanes=0';
+
+      const dl = document.getElementById('dl_pdf_btn');
+      if (dl) {
+        dl.href = row.file_url;
+        if (row.file_name) dl.download = row.file_name;
+      }
+
+      const fname = document.getElementById('dl_pdf_fname');
+      if (fname && row.file_name) {
+        fname.textContent = row.file_name;
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load cloud PDF, falling back to default:', err);
+  }
+}

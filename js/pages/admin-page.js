@@ -10,6 +10,7 @@ import { footerHTML } from '../components/footer.js';
 import { LOGO }       from '../logo.js';
 import { initPlayer } from '../player.js';
 import { handleFile, handleDrop, setUpUI, resetDefault } from '../upload.js';
+import { supabase }   from '../supabase.js';
 
 /* ── Expose upload handlers on window so inline HTML onclick/onchange can call them ── */
 window.handleFile   = handleFile;
@@ -244,25 +245,59 @@ const pdfAdminPanel = () => {
 
 /* ── PDF file handler (admin-local) ─────── */
 function initPdfHandlers() {
-  window._handlePdfFile = (file) => {
+  window._handlePdfFile = async (file) => {
     if (!file || file.type !== 'application/pdf') {
       document.getElementById('uname_pdf').textContent = 'Invalid — PDF files only';
       return;
     }
-    const url = URL.createObjectURL(file);
-    const iframe = document.querySelector('.pdf-shell iframe');
-    if (iframe) iframe.src = url + '#toolbar=0&navpanes=0';
     
-    const dl = document.getElementById('dl_pdf_btn');
-    if (dl) {
-      dl.href = url;
-      dl.download = file.name;
+    document.getElementById('uname_pdf').textContent = 'Processing...';
+
+    try {
+      const filePath = `pdf/${file.name}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('pdfs')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('pdfs')
+        .getPublicUrl(filePath);
+
+      const { error: dbError } = await supabase
+        .from('module_content')
+        .upsert({
+          module_key: 'pdf',
+          file_url: publicUrl,
+          file_name: file.name,
+          file_type: 'pdf',
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'module_key' });
+
+      if (dbError) throw dbError;
+
+      const iframe = document.querySelector('.pdf-shell iframe');
+      if (iframe) iframe.src = publicUrl + '#toolbar=0&navpanes=0';
+      
+      const dl = document.getElementById('dl_pdf_btn');
+      if (dl) {
+        dl.href = publicUrl;
+        dl.download = file.name;
+      }
+      
+      document.getElementById('uname_pdf').textContent = 'Loaded: ' + file.name;
+      document.getElementById('usub_pdf').textContent  = 'PDF active in viewer above';
+      document.getElementById('uicon_pdf').innerHTML   =
+        `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>`;
+
+    } catch (err) {
+      console.error('PDF upload failed:', err);
+      document.getElementById('uname_pdf').textContent = 'Upload Failed';
+      document.getElementById('usub_pdf').textContent = err.message || 'Check connection';
+      document.getElementById('uicon_pdf').innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     }
-    
-    document.getElementById('uname_pdf').textContent = 'Loaded: ' + file.name;
-    document.getElementById('usub_pdf').textContent  = 'PDF active in viewer above';
-    document.getElementById('uicon_pdf').innerHTML   =
-      `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>`;
   };
 
   window._handlePdfDrop = (e) => {

@@ -3,8 +3,8 @@
 // Upload logic is intentionally absent. See admin.html for the admin portal.
 
 import { homePage }   from './pages/home.js';
-import { videoPage }  from './pages/video.js';
-import { pdfPage }    from './pages/pdf.js';
+import { videoPage, loadCloudVideo }  from './pages/video.js';
+import { pdfPage, loadCloudPdf }    from './pages/pdf.js';
 import { initPlayer } from './player.js';
 
 /* ── Expose to inline onclick handlers ───────── */
@@ -55,8 +55,9 @@ function render() {
     default:     root.innerHTML = homePage();
   }
 
-  if (currentPage === 'v1') setTimeout(() => initPlayer('p1'), 60);
-  if (currentPage === 'v2') setTimeout(() => initPlayer('p2'), 60);
+  if (currentPage === 'v1') { setTimeout(() => initPlayer('p1'), 60); setTimeout(() => loadCloudVideo(1), 100); }
+  if (currentPage === 'v2') { setTimeout(() => initPlayer('p2'), 60); setTimeout(() => loadCloudVideo(2), 100); }
+  if (currentPage === 'pdf') { setTimeout(() => loadCloudPdf(), 100); }
 }
 
 /* ── Boot ────────────────────────────────────── */

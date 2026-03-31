@@ -6,6 +6,7 @@
 import { ic }         from '../icons.js';
 import { playerHTML } from '../components/player-html.js';
 import { footerHTML } from '../components/footer.js';
+import { supabase }   from '../supabase.js';
 
 const DFLT = '';
 
@@ -17,7 +18,7 @@ const MODULE_DATA = {
     chapters: [
       [0,   'Introduction'],
       [225, 'Four Forces'],
-      [432, 'Bernoulli\'s Principle'],
+      [432, "Bernoulli's Principle"],
       [672, 'Wing Design'],
       [930, 'Case Study'],
     ],
@@ -85,3 +86,34 @@ export const videoPage = (num) => {
   ${footerHTML()}
 </div>`;
 };
+
+export async function loadCloudVideo(num) {
+  try {
+    const moduleKey = num === 1 ? 'v1' : 'v2';
+    const pid = 'p' + num;
+    
+    const { data: row, error } = await supabase
+      .from('module_content')
+      .select('file_url')
+      .eq('module_key', moduleKey)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error; // ignore no rows matched error loosely
+
+    if (row && row.file_url) {
+      const v = document.getElementById('vid_' + pid);
+      if (v) {
+        v.src = row.file_url;
+      }
+
+      const badge = document.getElementById('cbadge_' + pid);
+      if (badge) {
+        badge.style.display = 'block';
+        const span = badge.querySelector('span');
+        if (span) span.textContent = '● CLOUD VIDEO';
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load cloud video, falling back to default:', err);
+  }
+}
